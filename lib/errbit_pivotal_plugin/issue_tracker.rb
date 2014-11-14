@@ -68,7 +68,7 @@ module ErrbitPivotalPlugin
       })
 
       if story.errors.present?
-        raise IssueTrackers::IssueTrackerError, story.errors.first
+        raise StandardError, story.errors.first
       else
         problem.update_attributes(
           :issue_link => "https://www.pivotaltracker.com/story/show/#{story.id}",
