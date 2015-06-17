@@ -50,7 +50,7 @@ module ErrbitPivotalPlugin
 
     def errors
       errors = []
-      if self.class.fields.detect {|f| params[f[0]].blank? }
+      if self.class.fields.detect {|f| params[f[0].to_s].blank? }
         errors << [:base, 'You must specify your Pivotal Tracker API token and Project ID']
       end
       errors
