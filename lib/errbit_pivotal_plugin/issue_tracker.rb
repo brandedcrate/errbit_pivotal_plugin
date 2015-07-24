@@ -30,6 +30,20 @@ module ErrbitPivotalPlugin
       FIELDS
     end
 
+    def self.icons
+      @icons ||= {
+        create: [
+          'image/png', ErrbitPivotalPlugin.read_static_file('pivotal_create.png')
+        ],
+        goto: [
+          'image/png', ErrbitPivotalPlugin.read_static_file('pivotal_goto.png'),
+        ],
+        inactive: [
+          'image/png', ErrbitPivotalPlugin.read_static_file('pivotal_inactive.png'),
+        ]
+      }
+    end
+
     def self.body_template
       @body_template ||= ERB.new(File.read(
         File.join(
@@ -43,38 +57,33 @@ module ErrbitPivotalPlugin
     end
 
     def configured?
-      params['project_id'].present? && params['api_token'].present?
+      options['project_id'].present? && options['api_token'].present?
     end
 
     def comments_allowed?; false; end
 
     def errors
       errors = []
-      if self.class.fields.detect {|f| params[f[0].to_s].blank? }
+      if self.class.fields.detect {|f| options[f[0]].blank? }
         errors << [:base, 'You must specify your Pivotal Tracker API token and Project ID']
       end
       errors
     end
 
-    def create_issue(problem, reported_by = nil)
-      PivotalTracker::Client.token = params['api_token']
+    def create_issue(title, body, user: {})
+      PivotalTracker::Client.token = options['api_token']
       PivotalTracker::Client.use_ssl = true
-      project = PivotalTracker::Project.find params['project_id'].to_i
+      project = PivotalTracker::Project.find options['project_id'].to_i
       story = project.stories.create({
-        :name => "[#{ problem.environment }][#{ problem.where }] #{problem.message.to_s.truncate(100)}",
+        :name => title,
         :story_type => 'bug',
-        :description => self.class.body_template.result(binding).unpack('C*').pack('U*'),
-        :requested_by => reported_by.name
+        :description => body
       })
 
       if story.errors.present?
         raise StandardError, story.errors.first
-      else
-        problem.update_attributes(
-          :issue_link => "https://www.pivotaltracker.com/story/show/#{story.id}",
-          :issue_type => self.class.label
-        )
       end
+      "https://www.pivotaltracker.com/story/show/#{story.id}"
     end
   end
 end
