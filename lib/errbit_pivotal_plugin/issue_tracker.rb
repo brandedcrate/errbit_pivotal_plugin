@@ -44,12 +44,8 @@ module ErrbitPivotalPlugin
       }
     end
 
-    def self.body_template
-      @body_template ||= ERB.new(File.read(
-        File.join(
-          ErrbitPivotalPlugin.root, 'views', 'pivotal_issues_body.txt.erb'
-        )
-      ))
+    def render_body_args
+      ["/pivotal_issue", formats: [:md]]
     end
 
     def url
